@@ -1,0 +1,32 @@
+import boto3
+import sagemaker
+from sagemaker import Model
+from sagemaker.predictor import RealTimePredictor
+import json
+
+# specify your S3 bucket and file key for the audio file
+s3_bucket = 'your-s3-bucket-name'
+audio_file_key = 'path/to/your/audio/file'
+
+# create a boto3 client for S3
+s3_client = boto3.client('s3')
+
+# use the S3 client to download the audio file to a temporary location
+with open('/tmp/myaudio.wav', 'wb') as f:
+    s3_client.download_fileobj(s3_bucket, audio_file_key, f)
+
+# create a SageMaker RealTimePredictor for the speech-to-text model
+predictor = RealTimePredictor(endpoint='<endpoint-name>')
+
+# prepare the audio file for transcription
+with open('/tmp/myaudio.wav', 'rb') as f:
+    audio_data = f.read()
+
+# perform the transcription
+response = predictor.predict(audio_data)
+
+# parse the transcription result from JSON
+transcription_result = json.loads(response)
+
+# print the transcription
+print(transcription_result['results']['transcripts'][0]['transcript'])
